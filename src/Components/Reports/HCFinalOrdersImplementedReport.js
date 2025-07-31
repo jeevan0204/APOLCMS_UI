@@ -14,7 +14,6 @@ function HCFinalOrdersImplementedReport() {
     const [LEGACYcasesList, setLEGACYcasesList] = useState([]);
     const [NEWcasesList, setNEWcasesList] = useState([]);
     const [CCcasesList, setCCcasesList] = useState([]);
-    const [FOIcasesList, setFOIcasesList] = useState([]);
     const [errmsg, seterrmsg] = useState(false);
     const [HEADING, setHEADING] = useState([]);
     const [showData, setshowData] = useState("");
