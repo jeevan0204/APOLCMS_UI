@@ -30,11 +30,11 @@ function InstructionsreplyCount() {
     }, []);
 
     function showInstructionsData() {
-        let Url = config.url.local_URL + "";
+        let Url = config.url.local_URL + "InstructionsreplyCountReport";
         CommonAxiosGet(Url).then((res) => {
             setDrillCount(0);
             if (res?.data?.status === true) {
-                setInstructionsList(res?.data?.data);
+                setInstructionsList(res?.data?.ReplyCountData);
                 setHeading(res?.data?.HEADING);
                 setsecShow(res?.data?.sec_show);
             }
@@ -65,7 +65,7 @@ function InstructionsreplyCount() {
                         ShowHODWise(row.original.dept_code, row.original.dept_name);
                     }}
                 >
-                    {row.original.casescount}
+                    {row.original.dept_name}
                 </div>
             ),
             Footer: 'dept_name'
@@ -80,7 +80,7 @@ function InstructionsreplyCount() {
                         ViewData("InstCount", row.original.dept_code, row.original.flag, "SHOWPOPUP");
                     }}
                 >
-                    {row.original.casescount}
+                    {row.original.instructions_count}
                 </div>
             ),
             Footer: 'instructions_count'
@@ -95,7 +95,7 @@ function InstructionsreplyCount() {
                         ViewData("ReplyInstCount", row.original.dept_code, row.original.flag, "SHOWPOPUP");
                     }}
                 >
-                    {row.original.casescount}
+                    {row.original.reply_instructions_count}
                 </div>
             ),
             Footer: 'reply_instructions_count'
@@ -105,11 +105,12 @@ function InstructionsreplyCount() {
     ];
 
     function ShowHODWise(deptId, deptDesc) {
-        let Url = config.url.local_URL + "InstructionsreplyCount?deptName=" + deptDesc + "&deptId=" + deptId;
+        let Url = config.url.local_URL + "InstructionsreplyCountSecDeptdata?deptName=" + deptDesc + "&deptId=" + deptId;
         CommonAxiosGet(Url).then((res) => {
             setDrillCount(0);
             if (res?.data?.status === true) {
-                setInstructionsList(res?.data?.data);
+                setInstructionsList(res?.data?.ReplyCountData);
+
             }
             else {
                 setInstructionsList([]);
@@ -119,11 +120,11 @@ function InstructionsreplyCount() {
     }
 
     function ViewData(pwCounterFlag, deptId, flag, popup) {
-        let Url = config.url.local_URL + "viewdata?pwCounterFlag=" + pwCounterFlag + "&deptId=" + deptId + "&flag=" + flag + "&SHOWPOPUP=" + popup;
+        let Url = config.url.local_URL + "InstructionsReplyCountReportViewData?pwCounterFlag=" + pwCounterFlag + "&deptId=" + deptId + "&flag=" + flag + "&SHOWPOPUP=" + popup;
         CommonAxiosGet(Url).then((res) => {
             setDrillCount(1);
             if (res?.data?.status === true) {
-                setcasesList(res?.data?.CASEWISEDATA);
+                setcasesList(res?.data?.ReplyCountData);
             }
             else {
                 setcasesList([]);
