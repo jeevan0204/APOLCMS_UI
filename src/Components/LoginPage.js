@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import Sample from './OutHeader'
 import * as bst from "react-bootstrap"
 import { ErrorMessage, Field, Form, FormikProvider, useFormik } from 'formik'
@@ -48,15 +48,16 @@ export default function LoginPage() {
         })
     }
 
-
+    const hasFetchedData = useRef(false)
     useEffect(() => {
-        // console.error('Error: ');
-        getCaptcha();
-        if (localStorage.getItem("username") === null && localStorage.getItem("image") === null) {
-            submitDetails();
+        if (!hasFetchedData.current) {
+            getCaptcha();
+            if (localStorage.getItem("username") === null && localStorage.getItem("image") === null) {
+                submitDetails();
+            }
+            hasFetchedData.current = true
         }
     }, []);
-
 
 
     const userValidationSchema = Yup.object().shape({
