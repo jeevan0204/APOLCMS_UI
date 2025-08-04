@@ -9,6 +9,7 @@ import { viewBucketImage } from '../../CommonUtils/ViewImagelm';
 import Swal from 'sweetalert2';
 import LegacyCaseDetailsPopup from '../Popups/LegacyCaseDetailsPopup';
 import { useSelector } from 'react-redux';
+import { viewImage } from '../../CommonUtils/ViewImage';
 
 function HCAbstractReport() {
     const [caseTypesList, setCaseTypesList] = useState([]);
@@ -28,7 +29,6 @@ function HCAbstractReport() {
     const [PopupData, setPopupData] = useState([]);
     function regularPopStatus() { setregularPopupFlag(false); }
 
-    const [showDrillCount, setDrillCount] = useState();
 
     const [showdata, setData] = useState();
 
@@ -55,7 +55,6 @@ function HCAbstractReport() {
             CommonAxiosGetPost(url, values).then((res) => {
                 if (res !== undefined && res.data.status === true) {
                     const firstData = res.data.data[0];
-                    setDrillCount(0);
                     if (logindetails.role === 5 || logindetails.role === 9 || logindetails.role === 10) {
                         setHeading(firstData.HEADING);
                         setHodWiseReportList(firstData.data);
@@ -147,23 +146,55 @@ function HCAbstractReport() {
     };
 
 
+    // **************level 1**********
+    const [showR1, setR1] = useState(false);
+    const [showR1ErrMsg, setR1ErrMsg] = useState(false);
+    const [showR21, setR21] = useState(false);
+    const [showR21ErrMsg, setR21ErrMsg] = useState(false);
+
+    // **************level 2**********
+    const [showR2, setR2] = useState(false);
+    const [showR2ErrMsg, setR2ErrMsg] = useState(false);
+
+    // **************level 3**********
+    const [showR3, setR3] = useState(false);
+    const [showR3ErrMsg, setR3ErrMsg] = useState(false);
+
+    //***********direct level ******** 
+    const [showR31, setR31] = useState(false);
+
     const GetLegacyAbstractReportList = () => {
         let url = config.url.local_URL + "getLegacyAbstractReportList";
 
         CommonAxiosGet(url)
             .then((res) => {
-                console.log(res.data.status);
-                setDrillCount(0);
+                //console.log(res.data.status);
                 if (res !== undefined && res.data.status === true) {
                     const firstData = res.data.data[0];
                     if (logindetails.role === 5 || logindetails.role === 9 || logindetails.role === 10) {
                         setHeading(firstData.HEADING);
                         setHodWiseReportList(firstData.data);
+                        setR21(true);
+                        setR1(false);
+                        setR2(false);
+                        setR3(false);
+                        setR21ErrMsg(false);
                     } else {
                         setLegacyAbstarctList(res.data.data);
+                        setR1(true);
+                        setR21(false);
+                        setR2(false);
+                        setR3(false);
+                        setR1ErrMsg(false);
                     }
                 } else {
-                    setLegacyAbstarctList([]);
+                    if (logindetails.role === 5 || logindetails.role === 9 || logindetails.role === 10) {
+                        setHodWiseReportList([]);
+                        setR21ErrMsg(true);
+                    } else {
+                        setLegacyAbstarctList([]);
+                        setR1ErrMsg(true);
+                    }
                 }
             })
             .catch((error) => {
@@ -171,7 +202,49 @@ function HCAbstractReport() {
             });
     };
 
+    function ShowHODWise(deptCode, deptName) {
+        let Url = config.url.local_URL + "HCCHODwisedetails?deptCode=" + deptCode + "&deptName=" + deptName;
+        CommonAxiosGet(Url).then((res) => {
+            if (res?.data?.status === true) {
+                const list = res?.data?.data?.[0]?.data || [];
+                setR2(true);
+                setR1(false);
 
+                setHeading(res?.data?.data?.[0]?.HEADING);
+                setHodWiseReportList(list);
+            }
+            else {
+                setR2ErrMsg(true);
+                setHodWiseReportList([]);
+            }
+        })
+    }
+    function getCasesWiseList(deptCode, deptName, status, level) {
+        let Url = config.url.local_URL + "HCCgetCasesList?deptCode=" + deptCode + "&deptName=" + deptName
+            + "&status=" + status + "&level=" + level;
+        CommonAxiosGet(Url).then((res) => {
+            if (res?.data?.status === true) {
+                const list = res?.data?.data?.[0]?.data || [];
+                if (logindetails.role === 5 || logindetails.role === 9 || logindetails.role === 10) {
+                    setR3(true);
+                    setR21(false);
+                }
+                else {
+                    setR3(true);
+                    setR21(false);
+                    setR2(false);
+                    setR1(false);
+                }
+                setHeading(res?.data?.data?.[0]?.HEADING);
+                setCasesList(list);
+            }
+            else {
+                setCasesList([]);
+                setR3ErrMsg(true);
+
+            }
+        })
+    }
 
 
     const columns = [
@@ -192,7 +265,7 @@ function HCAbstractReport() {
                     onClick={() => {
 
                         ShowHODWise(row.original.deptcode, row.original.description);
-
+                        setR31(false);
                     }}
                 >
                     {row.original.description}
@@ -206,7 +279,7 @@ function HCAbstractReport() {
                 <div style={{ cursor: "pointer", color: "blue", textAlign: "center", }}
                     onClick={() => {
                         getCasesWiseList(row.original.deptcode, row.original.description, 'ALL', 'SD');
-
+                        setR31(true);
                     }}
                 >
                     {row.original.total_cases}
@@ -225,6 +298,7 @@ function HCAbstractReport() {
                         }
                         else {
                             getCasesWiseList(row.original.deptcode, row.original.description, 'withSD', 'SD');
+                            setR31(true);
                         }
                     }}
                 >
@@ -240,7 +314,7 @@ function HCAbstractReport() {
                 <div style={{ cursor: "pointer", color: "blue", textAlign: "center", }}
                     onClick={() => {
                         getCasesWiseList(row.original.deptcode, row.original.description, 'withMLO', 'SD');
-
+                        setR31(true);
                     }}
                 >
                     {row.original.withmlo}
@@ -255,7 +329,7 @@ function HCAbstractReport() {
                 <div style={{ cursor: "pointer", color: "blue", textAlign: "center", }}
                     onClick={() => {
                         getCasesWiseList(row.original.deptcode, row.original.description, 'withHOD', 'SD');
-
+                        setR31(true);
                     }}
                 >
                     {row.original.withhod}
@@ -270,7 +344,7 @@ function HCAbstractReport() {
                 <div style={{ cursor: "pointer", color: "blue", textAlign: "center", }}
                     onClick={() => {
                         getCasesWiseList(row.original.deptcode, row.original.description, 'withNO', 'SD');
-
+                        setR31(true);
                     }}
                 >
                     {row.original.withnodal}
@@ -285,7 +359,7 @@ function HCAbstractReport() {
                 <div style={{ cursor: "pointer", color: "blue", textAlign: "center", }}
                     onClick={() => {
                         getCasesWiseList(row.original.deptcode, row.original.description, 'withSDSec', 'SD');
-
+                        setR31(true);
                     }}
                 >
                     {row.original.withsection}
@@ -301,7 +375,7 @@ function HCAbstractReport() {
                     onClick={() => {
 
                         getCasesWiseList(row.original.deptcode, row.original.description, 'withHODSec', 'SD');
-
+                        setR31(true);
                     }}
                 >
                     {row.original.withsectionhod}
@@ -317,7 +391,7 @@ function HCAbstractReport() {
                 <div style={{ cursor: "pointer", color: "blue", textAlign: "center", }}
                     onClick={() => {
                         getCasesWiseList(row.original.deptcode, row.original.description, 'withDC', 'SD');
-
+                        setR31(true);
                     }}
                 >
                     {row.original.withdc}
@@ -333,7 +407,7 @@ function HCAbstractReport() {
                 <div style={{ cursor: "pointer", color: "blue", textAlign: "center", }}
                     onClick={() => {
                         getCasesWiseList(row.original.deptcode, row.original.description, 'withDistNO', 'SD');
-
+                        setR31(true);
                     }}
                 >
                     {row.original.withdistno}
@@ -348,7 +422,7 @@ function HCAbstractReport() {
                 <div style={{ cursor: "pointer", color: "blue", textAlign: "center", }}
                     onClick={() => {
                         getCasesWiseList(row.original.deptcode, row.original.description, 'withDistSec', 'SD');
-
+                        setR31(true);
                     }}
                 >
                     {row.original.withsectiondist}
@@ -363,7 +437,7 @@ function HCAbstractReport() {
                 <div style={{ cursor: "pointer", color: "blue", textAlign: "center", }}
                     onClick={() => {
                         getCasesWiseList(row.original.deptcode, row.original.description, 'withGP', 'SD');
-
+                        setR31(true);
                     }}
                 >
                     {row.original.withgpo}
@@ -379,7 +453,7 @@ function HCAbstractReport() {
                 <div style={{ cursor: "pointer", color: "blue", textAlign: "center", }}
                     onClick={() => {
                         getCasesWiseList(row.original.deptcode, row.original.description, 'closed', 'SD');
-
+                        setR31(true);
                     }}
                 >
                     {row.original.closedcases}
@@ -395,7 +469,7 @@ function HCAbstractReport() {
                 <div style={{ cursor: "pointer", color: "blue", textAlign: "center", }}
                     onClick={() => {
                         getCasesWiseList(row.original.deptcode, row.original.description, 'goi', 'SD');
-
+                        setR31(true);
                     }}
                 >
                     {row.original.goi}
@@ -410,7 +484,7 @@ function HCAbstractReport() {
                 <div style={{ cursor: "pointer", color: "blue", textAlign: "center", }}
                     onClick={() => {
                         getCasesWiseList(row.original.deptcode, row.original.description, 'psu', 'SD');
-
+                        setR31(true);
                     }}
                 >
                     {row.original.psu}
@@ -425,7 +499,7 @@ function HCAbstractReport() {
                 <div style={{ cursor: "pointer", color: "blue", textAlign: "left", }}
                     onClick={() => {
                         getCasesWiseList(row.original.deptcode, row.original.description, 'Private', 'SD');
-
+                        setR31(true);
                     }}
                 >
                     {row.original.privatetot}
@@ -729,7 +803,8 @@ function HCAbstractReport() {
             isClickable: true,
             Cell: ({ row }) => (
                 <center>
-                    <h5 style={{ color: "blue", fontSize: "1.5vh", textDecoration: "underline", cursor: "pointer", textAlign: "center" }} onClick={() => { viewBucketImage(row?.original?.scanned_document_path); }} >
+                    <h5 style={{ color: "blue", fontSize: "1.5vh", textDecoration: "underline", cursor: "pointer", textAlign: "center" }}
+                        onClick={() => { viewImage(row?.original?.scanned_document_path); }} >
                         View
                     </h5>
                 </center>
@@ -824,65 +899,6 @@ function HCAbstractReport() {
         },
     ];
 
-    function ShowHODWise(deptCode, deptName) {
-        let Url = config.url.local_URL + "HCCHODwisedetails?deptCode=" + deptCode + "&deptName=" + deptName;
-        CommonAxiosGet(Url).then((res) => {
-            if (res?.data?.status === true) {
-                const list = res?.data?.data?.[0]?.data || [];
-                if (logindetails.role === 5 || logindetails.role === 9 || logindetails.role === 10) {
-                    setDrillCount(0);
-                }
-                else {
-                    setDrillCount(1);
-                    setData(1);
-                }
-                setHeading(res?.data?.data?.[0]?.HEADING);
-                setHodWiseReportList(list);
-            }
-            else {
-                setHodWiseReportList([]);
-            }
-        })
-    }
-    function getCasesWiseList(deptCode, deptName, status, level) {
-        let Url = config.url.local_URL + "HCCgetCasesList?deptCode=" + deptCode + "&deptName=" + deptName
-            + "&status=" + status + "&level=" + level;
-        CommonAxiosGet(Url).then((res) => {
-            if (res?.data?.status === true) {
-                const list = res?.data?.data?.[0]?.data || [];
-                if (logindetails.role === 5 || logindetails.role === 9 || logindetails.role === 10) {
-                    setDrillCount(1);
-                }
-                else {
-                    setDrillCount(2);
-                }
-                setHeading(res?.data?.data?.[0]?.HEADING);
-                setCasesList(list);
-            }
-            else {
-                setCasesList([]);
-            }
-        })
-    }
-
-    function isBackFunction() {
-        console.log("drillcounts-------", showDrillCount)
-        if ((logindetails.role === 5 || logindetails.role === 9 || logindetails.role === 10) && showDrillCount == 1) {
-            setDrillCount(showDrillCount - 1)
-        }
-        else if (!showdata && showDrillCount === 2) {
-            setDrillCount(showDrillCount - 2);
-        }
-        else {
-            setDrillCount(showDrillCount - 1);
-        }
-    }
-
-    useEffect(() => {
-        if (showDrillCount === 0) {
-            setData();
-        }
-    })
     useEffect(() => {
 
         GetCaseTypesList();
@@ -893,6 +909,24 @@ function HCAbstractReport() {
         GetLegacyAbstractReportList();
 
     }, []);
+
+
+
+    function BacktoHodwise() {
+        setR21(true);
+        setR3(false);
+    }
+
+    function BacktoSecwise() {
+        setR1(true);
+        setR2(false);
+        setR3(false);
+    }
+    function BacktoDeptwise() {
+        setR2(true);
+        setR3(false);
+    }
+
 
     return (
         <>
@@ -1020,32 +1054,142 @@ function HCAbstractReport() {
                     </Form>
                 </FormikProvider>
 
-                {showDrillCount === 0 && (<>
-                    {legacyAbstarctList?.length > 0 ? (
-                        <CommonReactTable data={legacyAbstarctList} columns={columns} showFooter={"true"}
-                            filename="HC ABSTRACT REPORT" headerName="Sect. Dept. Wise High Court Cases Abstract Report"
-                        />
-                    ) : (errmsg && (
-                        <center><b style={{ color: "red" }}>*********No Data Found*********</b></center>))}
-                </>)}
-                {console.log("dssssss----", showDrillCount, hodWiseReportList?.length)}
 
-                {(showDrillCount === 0 || showDrillCount === 1) && (<>
-                    {hodWiseReportList?.length > 0 ? (
-                        <CommonReactTable data={hodWiseReportList} columns={columnsHod} showFooter={"true"}
-                            filename="Deptwise Abstract Report" headerName="Dept. Wise High Court Cases Abstract Report"
-                            isBack={(logindetails.role === 5 || logindetails.role === 9 || logindetails.role === 10) ? false : true} isBackFunction={isBackFunction} />
-                    ) : (errmsg && (
-                        <center><b style={{ color: "red" }}>*********No Data Found*********</b></center>))}</>)}
+                {showR1 && (
+                    <>
+                        {showR1ErrMsg ? (
+                            <center className="text-danger h6">*** No Data Found ***</center>
+                        ) : (<>
+                            <div className="inner-herbpage-service-title-sub">
+                                <h1>Sect. Dept. Wise High Court Cases Abstract Report</h1>
+                            </div>
+                            <CommonReactTable data={legacyAbstarctList} columns={columns} showFooter={"true"}
+                                filename="HC ABSTRACT REPORT" />
+                        </>)}
+                    </>
+                )}
+                {showR21 ? (
+                    <>
+                        {showR21ErrMsg ? (
+                            <>
+                                {![5, 9, 10].includes(logindetails.role) && (
+                                    <bst.Row>
+                                        <bst.Col xs={12} sm={12} md={12} lg={11} xl={11} xxl={11}></bst.Col>
+                                        <bst.Col xs={12} sm={12} md={12} lg={1} xl={1} xxl={1} className="px-5 py-1">
+                                            <button type="button" className="btn btn-sm btn-secondary" onClick={() => { BacktoSecwise(); }}>Back</button>
+                                        </bst.Col>
+                                    </bst.Row>
+                                )}
+                                <center className="text-danger h6">*** No Data Found ***</center>
+                            </>
+                        ) : (
+                            <>
+                                {![5, 9, 10].includes(logindetails.role) && (
+                                    <bst.Row>
+                                        <bst.Col xs={12} sm={12} md={12} lg={11} xl={11} xxl={11}></bst.Col>
+                                        <bst.Col xs={12} sm={12} md={12} lg={1} xl={1} xxl={1} className="px-5 py-1">
+                                            <button type="button" className="btn btn-sm btn-secondary" onClick={() => { BacktoSecwise(); }}>Back</button>
+                                        </bst.Col>
+                                    </bst.Row>
+                                )}
+                                <div className="inner-herbpage-service-title-sub">
+                                    <h1>Dept. Wise High Court Cases Abstract Report</h1>
+
+                                </div>
+                                <CommonReactTable data={hodWiseReportList} columns={columnsHod} showFooter={"true"}
+                                    filename="Deptwise Abstract Report" />
+
+                            </>
+                        )}
+                    </>
+                ) : (showR2 ? (
+                    <>
+                        {showR2ErrMsg ? (
+                            <>
+                                <bst.Row>
+                                    <bst.Col xs={12} sm={12} md={12} lg={11} xl={11} xxl={11}></bst.Col>
+                                    <bst.Col xs={12} sm={12} md={12} lg={1} xl={1} xxl={1} className="px-5 py-1">
+                                        <button type="button" className="btn btn-sm btn-secondary" onClick={() => { BacktoSecwise(); }}>Back</button>
+                                    </bst.Col>
+                                </bst.Row>
+
+                                <center className="text-danger h6">*** No Data Found ***</center>
+                            </>
+                        ) : (
+                            <>
+                                <bst.Row>
+                                    <bst.Col xs={12} sm={12} md={12} lg={11} xl={11} xxl={11}></bst.Col>
+                                    <bst.Col xs={12} sm={12} md={12} lg={1} xl={1} xxl={1} className="px-5 py-1">
+                                        <button type="button" className="btn btn-sm btn-secondary" onClick={() => { BacktoSecwise(); }}>Back</button>
+                                    </bst.Col>
+                                </bst.Row>
+
+                                <div className="inner-herbpage-service-title-sub">
+                                    <h1>Dept. Wise High Court Cases Abstract Report</h1>
+                                </div>
+                                <CommonReactTable data={hodWiseReportList} columns={columnsHod} showFooter={"true"}
+                                    filename="Deptwise Abstract Report" />
+
+                            </>
+                        )}
+                    </>) : <></>)}
 
 
-                {(showDrillCount === 1 || showDrillCount === 2) && (<>
-                    {casesList?.length > 0 ? (
-                        <CommonReactTable data={casesList} columns={columnsList} showFooter={"true"}
-                            filename="HC ABSTRACT Cases REPORT" headerName={heading} isBack={true}
-                            isBackFunction={isBackFunction} />
-                    ) : (errmsg && (
-                        <center><b style={{ color: "red" }}>*********No Data Found*********</b></center>))}</>)}
+                {showR3 ? (<>
+                    {showR3ErrMsg ? (
+                        <>
+                            <bst.Row>
+                                <bst.Col xs={12} sm={12} md={12} lg={11} xl={11} xxl={11}></bst.Col>
+                                <bst.Col xs={12} sm={12} md={12} lg={1} xl={1} xxl={1} className="px-5 py-1">
+                                    <button type="button" className="btn btn-sm btn-secondary"
+                                        onClick={() => {
+                                            if ([5, 9, 10].includes(logindetails.role)) {
+                                                BacktoHodwise();
+                                            }
+                                            else if (showR31 === true) {
+                                                BacktoSecwise();
+                                            }
+
+                                            else {
+                                                BacktoDeptwise();
+                                            }
+                                        }}>Back</button>
+                                </bst.Col>
+                            </bst.Row>
+
+                            <center className="text-danger h6">*** No Data Found ***</center>
+                        </>
+                    ) : (
+                        <>
+                            <bst.Row>
+                                <bst.Col xs={12} sm={12} md={12} lg={11} xl={11} xxl={11}></bst.Col>
+                                <bst.Col xs={12} sm={12} md={12} lg={1} xl={1} xxl={1} className="px-5 py-1">
+                                    <button type="button" className="btn btn-sm btn-secondary"
+                                        onClick={() => {
+                                            if ([5, 9, 10].includes(logindetails.role)) {
+                                                BacktoHodwise();
+                                            }
+                                            else if (showR31 === true) {
+                                                BacktoSecwise();
+                                            }
+                                            else {
+                                                BacktoDeptwise();
+                                            }
+                                        }}>Back</button>
+                                </bst.Col>
+                            </bst.Row>
+                            <div className="inner-herbpage-service-title-sub">
+                                <h1></h1>
+                            </div>
+                            <CommonReactTable data={casesList} columns={columnsList} showFooter={"true"}
+                                filename="HC ABSTRACT Cases list REPORT" />
+
+                        </>
+                    )}
+                </>
+                ) : (
+                    <></>
+                )}
 
             </bst.Row>
             <LegacyCaseDetailsPopup popupflagvalue={showModelPopup} setPopupflagvalue={setModelPopup} regularpopup={regularPopStatus}
