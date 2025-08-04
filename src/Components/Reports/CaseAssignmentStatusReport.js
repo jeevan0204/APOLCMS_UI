@@ -10,6 +10,8 @@ import { viewBucketImage } from '../../CommonUtils/ViewImagelm';
 function CaseAssignmentStatusReport() {
     const [assignmentList, setassignmentList] = useState([]);
     const [heading, setHeading] = useState([]);
+    const [headingCases, setHeadingCases] = useState([]);
+
     const [casesList, setcasesList] = useState([]);
     const [showDrillCount, setDrillCount] = useState();
     const [errmsg, seterrmsg] = useState(false);
@@ -30,11 +32,11 @@ function CaseAssignmentStatusReport() {
     }, []);
 
     function showAssignmentsData() {
-        let Url = config.url.local_URL + "";
+        let Url = config.url.local_URL + "CaseAssignmentStatus";
         CommonAxiosGet(Url).then((res) => {
             setDrillCount(0);
             if (res?.data?.status === true) {
-                setassignmentList(res?.data?.data);
+                setassignmentList(res?.data?.DEPTWISEHCCASES);
                 setHeading(res?.data?.HEADING);
 
             }
@@ -129,12 +131,13 @@ function CaseAssignmentStatusReport() {
     function getCasesList(type, deptId, deptName) {
         let Url = config.url.local_URL + "CaseAssignmentStatusList?deptName=" + deptName + "&deptId=" + deptId + "&actionType=" + type;
         CommonAxiosGet(Url).then((res) => {
-            setDrillCount(0);
+            setDrillCount(1);
             if (res?.data?.status === true) {
-                setassignmentList(res?.data?.data);
+                setcasesList(res?.data?.DEPTWISEHCCASES);
+                setHeadingCases(res?.data?.HEADING)
             }
             else {
-                setassignmentList([]);
+                setcasesList([]);
                 seterrmsg(true);
             }
         })
@@ -298,7 +301,7 @@ function CaseAssignmentStatusReport() {
                         {casesList?.length > 0 ? (
                             <div style={{ width: "98%" }}>
                                 <CommonReactTable data={casesList} columns={columnsList} showFooter={"true"}
-                                    filename="Assignment Status Abstract Report" headerName="" isBack={true} isBackFunction={isBackFunction} />
+                                    filename="Assignment Status Abstract Report" headerName={headingCases} isBack={true} isBackFunction={isBackFunction} />
                             </div>
                         ) : (errmsg && (
                             <center><b style={{ color: "red" }}>*********No Data Found*********</b></center>))}</>)}
